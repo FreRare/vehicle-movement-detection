@@ -4,7 +4,7 @@ from tracking import update_trackers
 from trend_analysis import run_trend_analysis, draw_trend_summary, collect_all_vehicles, set_frame_dimensions
 import time
 
-VIDEO_PATH = "test_data/test_vid_long.mp4"
+VIDEO_PATH = "test_data/test_vid_short.mp4"
 
 ANALYSIS_INTERVAL = 200 # Trend analysis on 200 frame interval
 
