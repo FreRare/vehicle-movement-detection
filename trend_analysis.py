@@ -14,7 +14,7 @@ K_MIN            = 3      # minimum number of clusters to evaluate
 WCSS_SMOOTH      = True   # smooth the WCSS curve before elbow detection
 FRAME_WIDTH  = None   # set once at startup
 FRAME_HEIGHT = None
-POSITION_WEIGHT     = 1.0   # weight of position components
+POSITION_WEIGHT     = 4.0   # weight of position components
 DISPLACEMENT_WEIGHT = 2.0   # higher = direction matters more than position
 
 # Needed so trend analysis work with all trajectories and not just seen ones
