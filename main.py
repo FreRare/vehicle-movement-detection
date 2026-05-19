@@ -1,10 +1,10 @@
 import cv2
 from detection import preprocess_frame, detect_vehicles
 from tracking import update_trackers
-from trend_analysis import run_trend_analysis, draw_trend_summary, collect_all_vehicles
+from trend_analysis import run_trend_analysis, draw_trend_summary, collect_all_vehicles, set_frame_dimensions
 import time
 
-VIDEO_PATH = "test_data/test_vid_short.mp4"
+VIDEO_PATH = "test_data/test_vid_long.mp4"
 
 ANALYSIS_INTERVAL = 200 # Trend analysis on 200 frame interval
 
@@ -24,7 +24,13 @@ def main():
 
     if not cap.isOpened():
         raise IOError(f"Cannot open video: {VIDEO_PATH}")
+    
+    # set up frame size
+    w   = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h   = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    set_frame_dimensions(w, h)
 
+    # Last frame needed for finalized trend display
     last_frame = None
 
     while cap.isOpened():

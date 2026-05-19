@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import MinMaxScaler
 import cv2
 
 
@@ -13,6 +12,10 @@ MIN_TRAJ_LENGTH  = 10     # discard trajectories shorter than this
 K_MAX            = 10     # maximum number of clusters to evaluate
 K_MIN            = 3      # minimum number of clusters to evaluate
 WCSS_SMOOTH      = True   # smooth the WCSS curve before elbow detection
+FRAME_WIDTH  = None   # set once at startup
+FRAME_HEIGHT = None
+POSITION_WEIGHT     = 1.0   # weight of position components
+DISPLACEMENT_WEIGHT = 2.0   # higher = direction matters more than position
 
 # Needed so trend analysis work with all trajectories and not just seen ones
 class ArchivedVehicle:
@@ -59,30 +62,39 @@ def resample_trajectory(trajectory, n=N_SAMPLE_POINTS):
 
     return np.stack([resampled_x, resampled_y], axis=1)
 
+def set_frame_dimensions(w, h):
+    global FRAME_WIDTH, FRAME_HEIGHT
+    FRAME_WIDTH  = w
+    FRAME_HEIGHT = h
+
 
 def trajectory_to_feature_vector(trajectory):
     """
-    Convert a resampled trajectory to a normalised 1D feature vector.
-
-    Steps:
-      1. Resample to N_SAMPLE_POINTS
-      2. Normalise coordinates to [0, 1] relative to the
-         trajectory's own bounding box
-      3. Flatten to shape (2*N,)
+    Feature vector with positions normalised to frame dimensions,
+    preserving absolute spatial location (lane position).
     """
-    resampled = resample_trajectory(trajectory)
+    if FRAME_WIDTH is None or FRAME_HEIGHT is None:
+        raise RuntimeError(
+            "Call set_frame_dimensions(w, h) before trend analysis."
+        )
 
-    u_min, v_min = resampled.min(axis=0)
-    u_max, v_max = resampled.max(axis=0)
+    resampled = resample_trajectory(trajectory)   # (N, 2) in pixels
 
-    # Avoid division by zero for stationary vehicles
-    u_range = u_max - u_min if u_max != u_min else 1.0
-    v_range = v_max - v_min if v_max != v_min else 1.0
+    # ── Position: normalise by frame size, NOT trajectory bounds ───
+    positions = resampled.copy().astype(np.float32)
+    positions[:, 0] /= FRAME_WIDTH    # x in [0, 1] relative to frame
+    positions[:, 1] /= FRAME_HEIGHT   # y in [0, 1] relative to frame
 
-    resampled[:, 0] = (resampled[:, 0] - u_min) / u_range
-    resampled[:, 1] = (resampled[:, 1] - v_min) / v_range
+    # ── Displacement: encodes direction of travel ──────────────────
+    displacements = np.diff(resampled, axis=0).astype(np.float32)
+    max_disp = np.linalg.norm(displacements, axis=1).max()
+    if max_disp > 0:
+        displacements /= max_disp
 
-    return resampled.flatten()   # shape: (2 * N_SAMPLE_POINTS,)
+    pos_flat  = positions.flatten()     * POSITION_WEIGHT
+    disp_flat = displacements.flatten() * DISPLACEMENT_WEIGHT
+
+    return np.concatenate([pos_flat, disp_flat])
 
 
 def build_feature_matrix(vehicles):
