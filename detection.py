@@ -1,20 +1,11 @@
 import cv2
-import numpy as np
 
 # =======================
 # Preprocessing 
 # =======================
 
-# ── Configuration ────────────────────────────────────────────────
-VIDEO_PATH = "your_video.mp4"
 GAUSSIAN_KERNEL = (5, 5)
 GAUSSIAN_SIGMA  = 1.5
-
-# ── Video capture ─────────────────────────────────────────────────
-cap = cv2.VideoCapture(VIDEO_PATH)
-
-if not cap.isOpened():
-    raise IOError(f"Cannot open video: {VIDEO_PATH}")
 
 def preprocess_frame(frame):
     """
@@ -31,12 +22,10 @@ def preprocess_frame(frame):
 # Vehicle Detection 
 # =======================
 
-# ── Configuration ────────────────────────────────────────────────
-MIN_CONTOUR_AREA = 1500   # px² — filters out small noise blobs
+MIN_CONTOUR_AREA = 1000   # px² — filters out small noise blobs
 MOG2_HISTORY     = 500    # frames used to build the background model
-MOG2_THRESHOLD   = 50     # sensitivity: lower = more detections
+MOG2_THRESHOLD   = 20     # sensitivity: lower = more detections
 
-# ── Background subtractor (MOG2) ──────────────────────────────────
 mog2 = cv2.createBackgroundSubtractorMOG2(
     history      = MOG2_HISTORY,
     varThreshold = MOG2_THRESHOLD,
@@ -96,27 +85,3 @@ def detect_vehicles(frame, preprocessed):
         )
 
     return detections, debug_frame
-
-
-# ── Main loop ─────────────────────────────────────────────────────
-frame_idx = 0
-
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    preprocessed          = preprocess_frame(frame)
-    detections, debug_img = detect_vehicles(frame, preprocessed)
-
-    print(f"Frame {frame_idx:04d} → {len(detections)} vehicle(s) detected")
-
-    cv2.imshow("Vehicle Detection", debug_img)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-    frame_idx += 1
-
-cap.release()
-cv2.destroyAllWindows()
