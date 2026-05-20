@@ -8,7 +8,7 @@ VIDEO_PATH = "test_data/test_vid_short.mp4"
 
 ANALYSIS_INTERVAL = 200 # Trend analysis on 200 frame interval
 
-SHOW_DEBUG_FRAMES = True # Show debug frames if True
+SHOW_DEBUG_FRAMES = False # Show debug frames if True
 SLOW_DEBUG_VIDEO = False # Slows video frame processing to 10ms/frame
 
 def main():
@@ -50,9 +50,8 @@ def main():
             labels, cluster_info, valid_v, overlay = run_trend_analysis(all_vehicles, frame)
             if overlay is not None:
                 cv2.imshow("Trend analysis", overlay)
-        
-        if SHOW_DEBUG_FRAMES:
-            cv2.imshow("Tracking", debug_img)
+
+        cv2.imshow("Tracking", debug_img)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
