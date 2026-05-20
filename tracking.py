@@ -37,6 +37,7 @@ class Vehicle:
         Returns the predicted (cx, cy) for this frame.
         """
         pred = self.kalman.predict()
+        pred = pred.flatten()
         return int(pred[0]), int(pred[1])
 
     def update(self, bbox):
